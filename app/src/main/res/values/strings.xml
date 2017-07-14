@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Soap Sample</string>
+    <string name="search_button_text">Search</string>
+    <string name="no_data_text">No Data</string>
+</resources>
