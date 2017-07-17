@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Soap Sample</string>
-    <string name="search_button_text">Search</string>
-    <string name="no_data_text">No Data</string>
+    <string name="edit_text_hint">Enter country here</string>
+    <string name="search_button_text">Search for major cities</string>
+    <string name="no_data_text">No cities found</string>
 </resources>

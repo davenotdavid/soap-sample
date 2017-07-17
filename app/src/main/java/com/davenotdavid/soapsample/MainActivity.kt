@@ -5,6 +5,7 @@ import android.content.AsyncTaskLoader
 import android.content.Loader
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.View
 
@@ -14,7 +15,7 @@ import kotlinx.android.synthetic.main.activity_main.*
  * This sample app requests XML response data (major cities within a given country) from a SOAP web
  * service.
  */
-class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<String> {
+class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<List<String>> {
 
     // Log tag constant.
     private val LOG_TAG = MainActivity::class.java.simpleName
@@ -26,31 +27,48 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<String> 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Runs UI initializations/instantiations.
+        init()
+    }
+
+    private fun init() {
+
+        // Makes the RecyclerView scroll down linearally as well as have a fixed size.
+        recycler_view.layoutManager = LinearLayoutManager(this)
+        recycler_view.setHasFixedSize(true)
+
+        // Sets the adapter on the RecyclerView so its list can be populated with UI.
+        recycler_view.adapter = CitiesAdapter(mutableListOf<String>())
+
         // Sets the button with the following functionality.
         search_button.setOnClickListener {
 
             // Initializes/restarts the Loader to begin a background thread for networking purposes.
             loaderManager.restartLoader(LOADER_ID, null, this)
 
-            // Hides the TextView of data for new search queries.
-            textview.visibility = View.INVISIBLE
+            // Hides the following views if they're not already for new search queries.
+            empty_state_textview.visibility = View.INVISIBLE
+            recycler_view.visibility = View.INVISIBLE
 
             // Views the progress bar for a loading UI.
             progress_bar.visibility = View.VISIBLE
         }
     }
 
-    override fun onCreateLoader(i: Int, bundle: Bundle?): Loader<String> {
-        return object : AsyncTaskLoader<String>(this) {
+    override fun onCreateLoader(i: Int, bundle: Bundle?): Loader<List<String>> {
+        return object : AsyncTaskLoader<List<String>>(this) {
 
             override fun onStartLoading() {
                 super.onStartLoading()
+
+                //Log.d(LOG_TAG, "onStartLoading()")
 
                 // Speaks for itself - forces the Loader to load.
                 forceLoad()
             }
 
-            override fun loadInBackground(): String? {
+            override fun loadInBackground(): List<String>? {
+                //Log.d(LOG_TAG, "loadInBackground()")
 
                 // Returns null and exits out of this thread immediately should the user not enter
                 // any input.
@@ -59,26 +77,30 @@ class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<String> 
                 }
 
                 // Returns XML response data via the following Utils object method.
-                return QueryUtils.fetchResponseData(input_query.text.toString())
+                return QueryUtils.fetchCitiesData(input_query.text.toString())
             }
         }
     }
 
-    override fun onLoadFinished(loader: Loader<String>, responseData: String?) {
+    override fun onLoadFinished(loader: Loader<List<String>>, responseData: List<String>?) {
+        //Log.d(LOG_TAG, "onLoadFinished()")
 
         // Hides the progress bar after the background thread completes.
         progress_bar.visibility = View.GONE
 
-        // Views the TextView of data for new search queries.
-        textview.visibility = View.VISIBLE
-
-        // Sets the XML response data as text for the TextView. Otherwise, sets "No Data" as text.
+        // Displays the RecyclerView of data. Otherwise, displays an empty state TextView instead.
         if (responseData != null) {
-            textview.text = responseData
+            recycler_view.visibility = View.VISIBLE
+            recycler_view.adapter = CitiesAdapter(responseData)
         } else {
-            textview.text = getString(R.string.no_data_text)
+            empty_state_textview.visibility = View.VISIBLE
         }
     }
 
-    override fun onLoaderReset(loader: Loader<String>) {}
+    override fun onLoaderReset(loader: Loader<List<String>>) {
+        //Log.d(LOG_TAG, "onLoaderReset()")
+
+        // "Clears" out the existing data since the loader resetted.
+        recycler_view.adapter = CitiesAdapter(mutableListOf<String>())
+    }
 }
