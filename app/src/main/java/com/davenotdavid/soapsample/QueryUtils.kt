@@ -1,15 +1,24 @@
 package com.davenotdavid.soapsample
 
+import android.util.Log
 import org.ksoap2.SoapEnvelope
 import org.ksoap2.serialization.SoapObject
 import org.ksoap2.serialization.SoapSerializationEnvelope
 import org.ksoap2.transport.HttpTransportSE
+import org.w3c.dom.Element
+import org.w3c.dom.Node
+import org.xml.sax.InputSource
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * Object/singleton class that consists of utility helper methods for making a request for XML
  * response data from a SOAP web service.
  */
 object QueryUtils {
+
+    // Log tag constant.
+    private val LOG_TAG = QueryUtils::class.java.simpleName
 
     // Elements of a SOAP envelop body.
     private val NAMESPACE = "http://www.webserviceX.NET"
@@ -24,9 +33,10 @@ object QueryUtils {
     private val URL = "http://www.webservicex.net/globalweather.asmx?WSDL"
 
     /**
-     * Helper method that requests and returns XML response data from a SOAP web service.
+     * Helper method that requests response data from a web service, and later returns a list of
+     * data (cities).
      */
-    fun fetchResponseData(userInput: String): String? {
+    fun fetchCitiesData(userInput: String): List<String>? {
 
         // A simple dynamic object that can be used to build SOAP calls without
         // implementing KvmSerializable. Essentially, this is what goes inside the body of
@@ -56,19 +66,50 @@ object QueryUtils {
             // This is the actual part that will call the webservice by setting the desired
             // header SOAP Action header field.
             httpTransport.call(SOAP_ACTION, envelope)
-        } catch (e: Exception) { // call() can throw either HttpResponseException, IOException, or XmlPullParserException
-            e.printStackTrace()
-        }
 
-        // Retrieves the SOAP response from the envelope body.
-        val response = envelope.bodyIn as SoapObject
-
-        // Only returns a SOAP response body in text should the SOAP result not be null.
-        if (response != null) {
-            return "SOAP response:\n\n" + response
+            // Returns a list of data (cities) after extracting data from the XML response.
+            return extractDataFromXmlResponse(envelope)
+        } catch (e: Exception) { // Many kinds of exceptions can be caught here
+            Log.e(LOG_TAG, e.toString())
         }
 
         // Otherwise, returns null.
         return null
+    }
+
+    /**
+     * Extracts data (cities) from the XML response, and ultimately returns a list of cities.
+     */
+    @Throws(Exception::class)
+    private fun extractDataFromXmlResponse(envelope: SoapSerializationEnvelope): List<String> {
+
+        // Initializes a list to add elements (cities).
+        val citiesList = mutableListOf<String>()
+
+        // Initializes/instantiates a DocumentBuilder to parse the response from the SOAP envelope
+        // in order to build an XML object, or a Document in this case.
+        val docBuildFactory = DocumentBuilderFactory.newInstance()
+        val docBuilder = docBuildFactory.newDocumentBuilder()
+        val doc = docBuilder.parse(InputSource(StringReader(envelope.response.toString())))
+
+        // Retrieves a list of Table nodes from the Document in order to iterate through.
+        val nodeList = doc.getElementsByTagName("Table")
+        for (i in 0..nodeList.length - 1) {
+
+            // Retrieves each Table node.
+            val node = nodeList.item(i)
+
+            // Runs the following functionality should the node be of an element type.
+            if (node.nodeType == Node.ELEMENT_NODE) {
+
+                // Initially casts the node as an element.
+                val element = node as Element
+
+                // Adds each city to the list.
+                citiesList.add(element.getElementsByTagName("City").item(0).textContent)
+            }
+        }
+
+        return citiesList
     }
 }
