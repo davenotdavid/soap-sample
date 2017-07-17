@@ -12,8 +12,8 @@ import android.view.View
 import kotlinx.android.synthetic.main.activity_main.*
 
 /**
- * This sample app requests XML response data (major cities within a given country) from a SOAP web
- * service.
+ * This sample app displays a list of data (major cities from a particular country) that's
+ * extracted from an XML response via a web service.
  */
 class MainActivity : AppCompatActivity(), LoaderManager.LoaderCallbacks<List<String>> {
 
