@@ -12,8 +12,8 @@ import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * Object/singleton class that consists of utility helper methods for making a request for XML
- * response data from a SOAP web service.
+ * Object/singleton class that consists of utility helper methods for making a request for
+ * extracting data (cities) from an XML response of a SOAP web service.
  */
 object QueryUtils {
 
